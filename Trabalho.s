@@ -39,150 +39,144 @@ loop:
 	cmp r0,#0
 	beq loop 		@ if zero, no button pressed
 	cmp r0,#BLUE_KEY_15
-	beq FIFTEEN
+	beq DIVISAO
 	cmp r0,#BLUE_KEY_14
-	beq FOURTEEN
+	beq RESTO
 	cmp r0,#BLUE_KEY_13
-	beq THIRTEEN
-	cmp r0,#BLUE_KEY_12
-	beq TWELVE
-	cmp r0,#BLUE_KEY_11
-	beq ELEVEN
-	cmp r0,#BLUE_KEY_10
-	beq TEN
-	cmp r0,#BLUE_KEY_09
-	beq NINE
-	cmp r0,#BLUE_KEY_08
-	beq EIGHT
-	cmp r0,#BLUE_KEY_07
-	beq SEVEN
-	cmp r0,#BLUE_KEY_06
-	beq SIX
-	cmp r0,#BLUE_KEY_05
-	beq FIVE
-	cmp r0,#BLUE_KEY_04
-	beq FOUR
-	cmp r0,#BLUE_KEY_03
-	beq THREE
-	cmp r0,#BLUE_KEY_02
-	beq TWO
-	cmp r0,#BLUE_KEY_01
-	beq ONE
-	cmp r0,#BLUE_KEY_00
 	beq ZERO
-	@mov r0,#5 	@clear previous line 
-	@swi SWI_CLEAR_LINE
-	@mov r1,#0
-	@mov r0,#0
-	@BL Display8Segment
-	@bal CKBLUELOOP
+	cmp r0,#BLUE_KEY_12
+	beq ENTER
+	cmp r0,#BLUE_KEY_11 @armazena na pilha o valor
+	beq MULTIPLICA
+	cmp r0,#BLUE_KEY_10
+	beq NOVE
+	cmp r0,#BLUE_KEY_09
+	beq OITO
+	cmp r0,#BLUE_KEY_08
+	beq SETE
+	cmp r0,#BLUE_KEY_07
+	beq SUBTRACAO
+	cmp r0,#BLUE_KEY_06
+	beq SEIS
+	cmp r0,#BLUE_KEY_05
+	beq CINCO
+	cmp r0,#BLUE_KEY_04
+	beq QUATRO
+	cmp r0,#BLUE_KEY_03
+	beq SOMA
+	cmp r0,#BLUE_KEY_02
+	beq TRES
+	cmp r0,#BLUE_KEY_01
+	beq DOIS
+	cmp r0,#BLUE_KEY_00
+	beq UM
 
-FIFTEEN:		@divisao
+DIVISAO:		@divisao
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=mdivisao	@divisao
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-FOURTEEN:		@resto
+RESTO:		@resto
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=mresto	
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-THIRTEEN:		@0
+ZERO:		@0
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #0	
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop
-TWELVE:
+ENTER:
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=menter	@enter
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-ELEVEN:
+MULTIPLICA:
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=mmultiplicacao	@multiplicacao
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-TEN:			@9
+NOVE:			@9
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #9	
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop	
-NINE:			@8
+OITO:			@8
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #8	
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop
-EIGHT:			@7
+SETE:			@7
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #7	
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop
-SEVEN:			@subtracao
+SUBTRACAO:			@subtracao
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=msubtracao	
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop	
-SIX:			@6
+SEIS:			@6
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #6	
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop
-FIVE:			@5
+CINCO:			@5
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #5	
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop
-FOUR:			@4
+QUATRO:			@4
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #4	
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop	
-THREE:			@soma
+SOMA:			@soma
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=madicao	
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-TWO:			@3
+TRES:			@3
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #3
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop
-ONE:			@2
+DOIS:			@2
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #2
 	swi SWI_DRAW_INT
 	mov r0, #0
 	b loop
-ZERO:			@1
+UM:			@1
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #1

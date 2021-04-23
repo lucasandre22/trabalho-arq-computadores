@@ -1,0 +1,6 @@
+sub r1, r1, #1 subtrai 1 de r1
+add r0, r1 adiciona r1 em e0
+mov r3, #0 atribui 0 em r3
+beq BRANCH pula pra branch if equal
+blt BRANCH pula pra branch if less than
+bgt BRANCH pula pra branch if greater than

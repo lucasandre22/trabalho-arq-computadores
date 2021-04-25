@@ -22,10 +22,14 @@
 	.equ BLUE_KEY_15, 1<<15 @button(15)
 
 start:
+	mov r0, #0
 	mov r2, #0
 	mov r3, #0
 	mov r4, #0
 	mov r5, #1
+	mov r6, #0 @sera o valor total da entrada do usuario
+	mov r7, #10 
+	
 up:			@testes
 	ldr r2,=Message
 	swi 0x204	@mostra mensagem
@@ -39,148 +43,205 @@ loop:
 	cmp r0,#0
 	beq loop 		@ if zero, no button pressed
 	cmp r0,#BLUE_KEY_15
-	beq DIVISAO
+	beq FIFTEEN
 	cmp r0,#BLUE_KEY_14
-	beq RESTO
+	beq FOURTEEN
 	cmp r0,#BLUE_KEY_13
-	beq ZERO
+	beq THIRTEEN
 	cmp r0,#BLUE_KEY_12
-	beq ENTER
-	cmp r0,#BLUE_KEY_11 @armazena na pilha o valor
-	beq MULTIPLICA
+	beq TWELVE
+	cmp r0,#BLUE_KEY_11
+	beq ELEVEN
 	cmp r0,#BLUE_KEY_10
-	beq NOVE
+	beq TEN
 	cmp r0,#BLUE_KEY_09
-	beq OITO
+	beq NINE
 	cmp r0,#BLUE_KEY_08
-	beq SETE
+	beq EIGHT
 	cmp r0,#BLUE_KEY_07
-	beq SUBTRACAO
+	beq SEVEN
 	cmp r0,#BLUE_KEY_06
-	beq SEIS
+	beq SIX
 	cmp r0,#BLUE_KEY_05
-	beq CINCO
+	beq FIVE
 	cmp r0,#BLUE_KEY_04
-	beq QUATRO
+	beq FOUR
 	cmp r0,#BLUE_KEY_03
-	beq SOMA
+	beq THREE
 	cmp r0,#BLUE_KEY_02
-	beq TRES
+	beq TWO
 	cmp r0,#BLUE_KEY_01
-	beq DOIS
+	beq ONE
 	cmp r0,#BLUE_KEY_00
-	beq UM
+	beq ZERO
+	@mov r0,#5 	@clear previous line 
+	@swi SWI_CLEAR_LINE
+	@mov r1,#0
+	@mov r0,#0
+	@BL Display8Segment
+	@bal CKBLUELOOP
 
-DIVISAO:		@divisao
+FIFTEEN:		@divisao
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=mdivisao	@divisao
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-RESTO:		@resto
+FOURTEEN:		@resto
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=mresto	
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-ZERO:		@0
+THIRTEEN:		@0
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #0	
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6		@r6 = r7*r6
+	cmp r2, r6		
+	addgt r6, r2, r6	@ if (r2 > r6) { r6 += r2 }
+	bgt loop		@ se r2 > r6 volta pro loop principal
+	add r6, r6, r2		@r6 += r2
 	b loop
-ENTER:
+	
+TWELVE:
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=menter	@enter
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-MULTIPLICA:
+ELEVEN:
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=mmultiplicacao	@multiplicacao
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-NOVE:			@9
+TEN:			@9
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #9	
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6 	
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop				
+	add r6, r6, r2		
 	b loop	
-OITO:			@8
+NINE:			@8
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #8	
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop			 		
+	add r6, r6, r2		
 	b loop
-SETE:			@7
+EIGHT:			@7
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #7	
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6 	
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop				
+	add r6, r6, r2		
 	b loop
-SUBTRACAO:			@subtracao
+SEVEN:			@subtracao
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=msubtracao	
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop	
-SEIS:			@6
+SIX:			@6
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #6	
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6 
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop				
+	add r6, r6, r2		
 	b loop
-CINCO:			@5
+FIVE:			@5
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #5	
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6 
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop				
+	add r6, r6, r2	
 	b loop
-QUATRO:			@4
+FOUR:			@4
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #4	
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6 
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop					
+	add r6, r6, r2	
 	b loop	
-SOMA:			@soma
+THREE:			@soma
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	ldr r2,=madicao	
 	swi SWI_DRAW_STRING
 	mov r0, #0
 	b loop
-TRES:			@3
+TWO:			@3
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #3
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop			 		
+	add r6, r6, r2	
 	b loop
-DOIS:			@2
+ONE:			@2
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #2
 	swi SWI_DRAW_INT
 	mov r0, #0
+	mul r6, r7, r6 
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop					
+	add r6, r6, r2	
 	b loop
-UM:			@1
+ZERO:			@1
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
 	mov r2, #1
 	swi SWI_DRAW_INT
+	mul r6, r7, r6 	
+	cmp r2, r6		
+	addgt r6, r2, r6
+	bgt loop				
+	add r6, r6, r2	
 	b loop
 
 madicao: .asciz "+"

@@ -25,25 +25,95 @@ memspace: .space 24
 
 start:
 	mov r0, #0
-	mov r2, #0
 	mov r3, #0
-	mov r4, #0
-	mov r5, #1
-	mov r6, #0 @sera o valor total da entrada do usuario
+	mov r4, #4
+	mov r5, #4
+	mov r6, #4 @sera o valor total da entrada do usuario
 	mov r7, #10 
 
-	ldr r10,=memspace @array
-	mov r11, #4 @soma array
-	mov r12, #0 @index atual
-	mov r13, #1 @controla index
+	mov r8, #4 @controla o array
+	mov r9, #0 @index
+	mov r11, #1 @incrementa index
+
+	mov r9, #0
+	mov r11, #4
+	mov r12, #5
+	mov r13, #6
+	mov r14, #7
+	mov r1, #0
+	ldr r10,=memspace
+
+	@ldrb  r2, [r10], #1      @ r2 = *r1++
+up:			@teste
+	str r9, [r10] @ store the value found in R2 (0x03) to the memory address found in R1
+	add r10, r8, r10
+	str r11, [r10] @ store the value found in R2 (0x03) to the memory address found in R1
+	add r10, r8, r10
+	str r12, [r10] @ store the value found in R2 (0x03) to the memory address found in R1
+	add r10, r8, r10
+	str r13, [r10] @ store the value found in R2 (0x03) to the memory address found in R1
+	add r10, r8, r10
+	str r14, [r10] @ store the value found in R2 (0x03) to the memory address found in R1
+	add r10, r8, r10
+	str r3, [r10] @ store the value found in R2 (0x03) to the memory address found in R1
+
+	@str r11, [r10] @ load address of destination
+	@ldrb r2, [r10], #1      @ r2 = *r1++
+	@str r12, [r10] @ load address of destination
+	@ldrb r2, [r10], #1      @ r2 = *r1++
+	@str r13, [r10] @ load address of destination
+	@ldrb r2, [r10], #1      @ r2 = *r1++
+	@str r14, [r10] @ load address of destination
+	@ldrb r2, [r10], #1      @ r2 = *r1++
+	@str r1, [r10] @ load address of destination
+
+testee:
+	ldr r3,=memspace
+	ldr r2, [r3]
+	@mov r2, r0
+	swi 0x206	@limpa tela
+	swi SWI_DRAW_INT	@mostra mensagem
+	add r3, r5, r3
+	@ldr r3,=memspace+4
+
+	ldr r2, [r3]
+	ldr r2, [r3]
+	swi 0x206	@limpa tela
+	swi SWI_DRAW_INT	@mostra mensagem
+	add r3, r5, r3
+
+	@ldr r3,=memspace+8
+	ldr r2, [r3]
+	swi 0x206	@limpa tela
+	swi SWI_DRAW_INT	@mostra mensagem
+	add r3, r5, r3
+
+	@ldr r3,=memspace+12
+	ldr r2, [r3] 	
+	swi 0x206	@limpa tela
+	swi SWI_DRAW_INT	@mostra mensagem
+	add r3, r5, r3
+
+	@ldr r3,=memspace+16
+	ldr r2, [r3]
+	swi 0x206	@limpa tela
+	swi SWI_DRAW_INT	@mostra mensagem
+	add r3, r5, r3
+
+	@ldr r3,=memspace+20
+	ldr r2, [r3]
+	swi 0x206	@limpa tela
+	swi SWI_DRAW_INT	@mostra mensagem
+
+	@ldr r9, [r10] @ load address of destination r10 in r9
+
 	
-	
-up:			@testes
-	ldr r2,=Message
-	swi 0x204	@mostra mensagem
 	swi SWI_CheckBlue	@retorna em R0 a tecla pressionada
-	swi SWI_CLEAR_DISPLAY	@limpa tela
-	b loop
+	swi 0x206	@limpa tela
+
+	ldrb  r3, [r6], #1
+fim:	b fim
+
 Message: .asciz "Calculadora\n"
 loop:
 	swi SWI_CheckBlue 	@get button press into R0
@@ -89,39 +159,12 @@ loop:
 	@BL Display8Segment
 	@bal CKBLUELOOP
 
-EMPURRAPILHA:
-	@verifica se está cheia antes, if index == 5 cheia : nao cheia
-	str r6, [r10]     @armazena o numero na posição da memoria apontado por r10
-	add r10, r11, r10 @incrementa +4 na memoria do array
-	add r12, r13, r12 @incrementa index atual array
-	mov r6, #0		  @r6 recebe 0 para a proxima leitura
-	@ldr r2,=marmazenou	@provisorio
-	@swi SWI_DRAW_STRING @provisorio
-	mov r14, r12 @provisorio
-	mov r12, #0 @provisorio
-	b FAZOPERACAO
-	b loop
-
-FAZOPERACAO:
-	ldr r10,=memspace
-	ldr r2, [r10]
-	swi SWI_DRAW_INT
-	add r10, r11, r10
-	add r12, r13, r12
-	CMP r12, r14
-	b fim
-	swi SWI_CLEAR_DISPLAY
-	beq loop
-	b FAZOPERACAO
-
-fim: b fim
-
 ENTRADA: @junta os algarismos
-	mul r6, r7, r6 	@multiplica o número armazenado por 10
-	cmp r2, r6		@
-	addgt r6, r2, r6 
+	mul r6, r7, r6 	
+	cmp r2, r6		
+	addgt r6, r2, r6
 	bgt loop				
-	add r6, r6, r2  
+	add r6, r6, r2
 	b loop
 
 ZERO:		@0
@@ -206,10 +249,10 @@ NOVE:			@9
 ENTER:
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
-	@ldr r2,=menter	@mostra mensagem enter
-	@swi SWI_DRAW_STRING
+	ldr r2,=menter	@enter
+	swi SWI_DRAW_STRING
 	mov r0, #0
-	b EMPURRAPILHA
+	b loop
 
 DIVISAO:		@divisao
 	add r4, r4, r5		@incrementa a coluna que vai ser printada
@@ -257,5 +300,4 @@ mresto: .asciz "%"
 mmultiplicacao: .asciz "*"
 menter: .asciz "enter"
 mdivisao: .asciz "/"
-marmazenou: .asciz "armazenou"
 

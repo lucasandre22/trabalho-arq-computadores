@@ -366,4 +366,34 @@ mpilhaesvaziada: .asciz "Pilha esvaziada"
 @mov r0,#LEFT_LED
 @swi SWI_SETLED
 
+@	.equ Sec1, 1000 @ 1 seconds interval
+@	.equ Point1Sec, 100 @ 0.1 seconds interval
+@	.equ EmbestTimerMask, 0x7fff @ 15 bit mask for timer values
+@	.equ Top15bitRange,0x0000ffff @(2^15) -1 = 32,767
+@	.text
+@_start:
+@	mov r6,#0 @ counting the loops (not necessary)
+@	ldr r8,=Top15bitRange
+@	ldr r7,=EmbestTimerMask
+@	ldr r10,=Point1Sec
+@	SWI SWI_GetTicks @Get current time T1
+@	mov r1,r0 @ R1 is T1
+@	and r1,r1,r7 @ T1 in 15 bits
+@RepeatTillTime:
+@	add r6,r6,#1 @ count number of loops (not necessary)
+@	SWI SWI_GetTicks @Get current time T2
+@	mov r2,r0 @ R2 is T2
+@	and r2,r2,r7 @ T2 in 15 bits
+@	cmp r2,r1 @ is T2>T1?
+@bgesimpletime:
+@	sub r9,r8,r1 @ TIME= 32,676 - T1
+@	add r9,r9,r2 @ + T2
+@	bal CheckInt
+@simpletime:
+@	sub r9,r2,r1 @ TIME = T2-T1
+@CheckInt:
+@	cmp r9,r10 @is TIME < interval?
+@ 	blt RepeatTillTime
+@	swi	SWI_EXIT
+@.end
 

@@ -5,6 +5,7 @@
 	.equ SWI_CheckBlue, 0x203 		@check press Blue button
 	.equ RIGHT_LED, 0x01			@right led lights
 	.equ BUTTON, 0x202			
+	.equ SWI_SETLED, 0x201 @LEDs on/off
 	.equ BOTAO_AZUL_00, 0x01 @button(0)
 	.equ BOTAO_AZUL_01, 0x02 @button(1)
 	.equ BOTAO_AZUL_02, 0x04 @button(2)
@@ -84,22 +85,13 @@ loop:
 	beq DOIS
 	cmp r0,#BOTAO_AZUL_00
 	beq UM
-	b testea
+	b ChecaBotaoEsquerdo
 
-testea:
+ChecaBotaoEsquerdo:
 	swi 0x202
-	cmp r0,#0x02
+	cmp r0,#1			@checa se o botao esquerdo foi apertado
 	beq ESVAZIAPILHA
 	b loop 		@ if zero, no button pressed
-	@mov r0,#5 	@clear previous line 
-	@swi SWI_CLEAR_LINE
-	@mov r1,#0
-	@mov r0,#0
-	@BL Display8Segment
-	@bal CKBLUELOOP
-
-@ldr r0,#5
-@swi 0x208 @clear line 5
 
 EMPURRAPILHA:
 	@verifica se está cheia antes, if index == 5 cheia : nao cheia
@@ -152,10 +144,18 @@ PILHAESVAZIADA:
 	ldr r2,=mpilhaesvaziada
 	mov r0, #0			@coluna 0
 	mov r1, #0			@linha 0
-	
 	swi SWI_DRAW_STRING
 	mov r1, #1			@linha 1
-	
+	b loop
+
+OPERACAOPORZERO:
+	mov r0,#RIGHT_LED
+	swi SWI_SETLED
+	@wait
+	mov r0,#0
+	swi SWI_SETLED
+	add r10, r11, r10 @arruma pilha
+	mov r0, #0
 	b loop
 
 fim: @provisorio
@@ -173,8 +173,8 @@ ENTRADA: @junta os algarismos
 	b loop
 
 ZERO:		@0
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r0, r4		@r0 representa a coluna
+	add r4, r4, r5		@incrementa a coluna que vai ser printada
 	mov r2, #0	
 	swi SWI_DRAW_INT
 	mov r0, #0
@@ -267,20 +267,39 @@ DIVISAO:		@divisao
 	cmp r12, #2		@se index < 2 entao não possuo dois numeros na pilha
 	blt loop
 	ldr r13, [r10]   @armazeno posicao atual
-	sub r12, r12, r5  @diminuo um index
 	sub r10, r10, r11 @diminuo 4 bytes da memoria para apontar para o numero anterior
 	ldr r14, [r10]
-	@verifica se um dos números é igual a 0
-	@div 
+	cmp r13, #0
+	beq OPERACAOPORZERO
+	cmp r14, #0
+	beq OPERACAOPORZERO
+	sub r12, r12, r5  @diminuo um index
+	mov r8, #0
 
-	@ldr r2,=mdivisao	@divisao
-	@swi SWI_DRAW_STRING
-	mov r0, #0
-	b MOSTRAPILHA
+CalculaDivisao:
+	@calcula divisao
+	@r13 dividido por r14
+	@armazena valor em r8, guarda em r10
 
 RESTO:		@resto
-	ldr r2,=mresto	
-	swi SWI_DRAW_STRING
+	cmp r12, #2		@se index < 2 entao não possuo dois numeros na pilha
+	blt loop
+	ldr r13, [r10]   @armazeno posicao atual
+	sub r10, r10, r11 @diminuo 4 bytes da memoria para apontar para o numero anterior
+	ldr r14, [r10]
+	cmp r13, #0
+	beq OPERACAOPORZERO
+	cmp r14, #0
+	beq OPERACAOPORZERO
+	sub r12, r12, r5  @diminuo um index
+	mov r8, #0
+
+CalculaResto:
+	@calcula resto
+	@r13 resto de r14
+	@armazena valor em r8, guarda em r10
+
+
 	mov r0, #0
 	b MOSTRAPILHA
 	

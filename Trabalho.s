@@ -274,6 +274,10 @@ DIVISAO:		@divisao
 	cmp r14, #0
 	beq OPERACAOPORZERO
 	sub r12, r12, r5  @diminuo um index
+	@vdiv r13, r14, r13
+	str r13, [r10]
+	add r10, r11, r10	@aumento um na memoria preparando para proxima entrada, ponteiro pra memoria sempre aponta pra posição vazia, da proxima entrada
+
 	mov r8, #0
 
 CalculaDivisao:
@@ -284,6 +288,7 @@ CalculaDivisao:
 RESTO:		@resto
 	cmp r12, #2		@se index < 2 entao não possuo dois numeros na pilha
 	blt loop
+	subs r10, r10, r11
 	ldr r13, [r10]   @armazeno posicao atual
 	sub r10, r10, r11 @diminuo 4 bytes da memoria para apontar para o numero anterior
 	ldr r14, [r10]
@@ -292,16 +297,21 @@ RESTO:		@resto
 	cmp r14, #0
 	beq OPERACAOPORZERO
 	sub r12, r12, r5  @diminuo um index
-	mov r8, #0
+	b CalculaResto
 
-CalculaResto:
-	@calcula resto
-	@r13 resto de r14
-	@armazena valor em r8, guarda em r10
-
-
+CalculaResto: @calcula resto | r13 resto de r14 | armazena valor em r8, guarda em r10
+	sub r13, r14, r13
+	cmp r13, r14
+	bgt CalculaResto
+	beq CalculaResto
+	str r13, [r10]
+	add r10, r11, r10	@aumento um na memoria preparando para proxima entrada, ponteiro pra memoria sempre aponta pra posição vazia, da proxima entrada
 	mov r0, #0
 	b MOSTRAPILHA
+
+Resto:
+
+
 	
 MULTIPLICA:
 	cmp r12, #2			@se index < 2 entao não possuo dois numeros na pilha

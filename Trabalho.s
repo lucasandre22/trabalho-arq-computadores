@@ -1,9 +1,11 @@
-	.equ SWI_CLEAR_DISPLAY,0x206 	@clear LCD
-	.equ SWI_DRAW_INT, 0x205 		@display an int on LCD	
-	.equ SWI_DRAW_STRING, 0x204     @display a string on LCD
+	.equ DOIS_SEGUNDOS, 2000
+	.equ SWI_GetTicks, 0x6d
+	.equ SWI_LIMPA_TELA,0x206 	@clear LCD
+	.equ SWI_ESCREVE_INT, 0x205 		@display an int on LCD	
+	.equ SWI_ESCREVE_STRING, 0x204     @display a string on LCD
 	.equ SWI_EXIT, 0x11 			@terminate program
-	.equ SWI_CheckBlue, 0x203 		@check press Blue button
-	.equ RIGHT_LED, 0x01			@right led lights
+	.equ SWI_CHECA_BOTAO_AZUL, 0x203 		@check press Blue button
+	.equ LED_DIREITO, 0x01			@right led lights
 	.equ BUTTON, 0x202			
 	.equ SWI_SETLED, 0x201 @LEDs on/off
 	.equ BOTAO_AZUL_00, 0x01 @button(0)
@@ -22,407 +24,354 @@
 	.equ BOTAO_AZUL_13, 1<<13 @button(13)
 	.equ BOTAO_AZUL_14, 1<<14 @button(14)
 	.equ BOTAO_AZUL_15, 1<<15 @button(15)
-	.equ Sec1, 1000 @ 1 seconds interval pagina 39 do guide
+	.equ BOTAO_ESQUERDO, 1 @button(15)
+	memspace: .space 24
 
-memspace: .space 24
+@--------------------------------------------------------------------------@
+@	Trabalho de arquitetura e organização de computadores - 2020/2
+@	Lucas André	
+@	Vitor Triches
+@
+@	A calculadora efetua todas as operações entre os dois últimos números da pilha,
+@	se a pilha é composta por números 9->3 respectivamente, a cálculo será 9(OPERAÇÃO)3, como
+@	por exemplo 9-3 caso seja subtração.
+@--------------------------------------------------------------------------@
 
-start:
-	mov r0, #0
-	mov r2, #0
-	mov r3, #0
+_start:
+	mov r0, #0				@coluna
+	mov r1, #0				@linha
+	mov r2, #0				@texto
+	mov r3, #0 				
 	mov r4, #0
-	mov r5, #1 @controla index
-	mov r6, #0 @sera o valor total da entrada do usuario
-	mov r7, #10 
-
-	mov r9, #0 @sempre valor 0
-	ldr r10,=memspace @array
-	mov r11, #4 @soma array
-	mov r12, #0 @index atual
-	@mov r5, #1 
-	
-	
-up:			@testes
-	ldr r2,=Message
-	swi 0x204	@mostra mensagem
-	swi SWI_CLEAR_DISPLAY	@limpa tela
-	b loop
+	mov r5, #1			    @controla index
+	mov r6, #0				@JUNTA_ALGARISMOS do usuário
+	mov r8, #0
+	mov r7, #10 			@multiplicador dos números de JUNTA_ALGARISMOS 
+	mov r9, #0 				@sempre valor 0
+	ldr r10, =memspace 		@array
+	mov r11, #4 			@soma array, para apontar para próxima posição, soma-se 4 bytes
+	mov r12, #0 			@index atual da pilha
+	mov r13, #0
+	mov r14, #0				@auxiliar, irá ser usado nas operações armazenando um dos números da pilha que irá ser submetido a operação
+	swi SWI_LIMPA_TELA	@limpa tela
 
 loop:
-	swi SWI_CheckBlue 	@guarda botão pressionado no r0
-	
-	@cmp r0,#0
-	@beq loop
-	cmp r0,#BOTAO_AZUL_15
+	swi SWI_CHECA_BOTAO_AZUL 	@guarda botão pressionado no r0
+	cmp r0,#BOTAO_AZUL_15 @3.3
 	beq DIVISAO
-	cmp r0,#BOTAO_AZUL_14
+	cmp r0,#BOTAO_AZUL_14 @3.2
 	beq RESTO
-	cmp r0,#BOTAO_AZUL_13
+	cmp r0,#BOTAO_AZUL_13 @3.1
 	beq ZERO
-	cmp r0,#BOTAO_AZUL_12
+	cmp r0,#BOTAO_AZUL_12 @3.0
 	beq ENTER
-	cmp r0,#BOTAO_AZUL_11
+	cmp r0,#BOTAO_AZUL_11 @2.3
 	beq MULTIPLICA
-	cmp r0,#BOTAO_AZUL_10
+	cmp r0,#BOTAO_AZUL_10 @2.2
 	beq NOVE
-	cmp r0,#BOTAO_AZUL_09
+	cmp r0,#BOTAO_AZUL_09 @2.1
 	beq OITO
-	cmp r0,#BOTAO_AZUL_08
+	cmp r0,#BOTAO_AZUL_08 @2.0
 	beq SETE
-	cmp r0,#BOTAO_AZUL_07
+	cmp r0,#BOTAO_AZUL_07 @1.3
 	beq SUBTRACAO
-	cmp r0,#BOTAO_AZUL_06
+	cmp r0,#BOTAO_AZUL_06 @1.2
 	beq SEIS
-	cmp r0,#BOTAO_AZUL_05
+	cmp r0,#BOTAO_AZUL_05 @1.1
 	beq CINCO
-	cmp r0,#BOTAO_AZUL_04
+	cmp r0,#BOTAO_AZUL_04 @1.0
 	beq QUATRO
-	cmp r0,#BOTAO_AZUL_03
+	cmp r0,#BOTAO_AZUL_03 @0.3
 	beq SOMA
-	cmp r0,#BOTAO_AZUL_02
+	cmp r0,#BOTAO_AZUL_02 @0.2
 	beq TRES
-	cmp r0,#BOTAO_AZUL_01
+	cmp r0,#BOTAO_AZUL_01 @0.1
 	beq DOIS
-	cmp r0,#BOTAO_AZUL_00
+	cmp r0,#BOTAO_AZUL_00 @0.0
 	beq UM
-	b ChecaBotaoEsquerdo
+	cmp r0, #1 
+	b CHECA_BOTAO_ESQUERDO
 
-ChecaBotaoEsquerdo:
-	swi 0x202
-	cmp r0,#1			@checa se o botao esquerdo foi apertado
-	beq ESVAZIAPILHA
-	b loop 		@ if zero, no button pressed
-
-EMPURRAPILHA:
-	@verifica se está cheia antes, if index == 5 cheia : nao cheia
-	cmp r12, #6
-	beq PILHACHEIA
-	str r6, [r10]     @armazena o numero na posição da memoria apontado por r10
-	add r10, r11, r10 @incrementa +4 na memoria do array
-	add r12, r5, r12 @incrementa index atual array
-	mov r6, #0		  @r6 recebe 0 para a proxima leitura
-
-	b MOSTRAPILHA
+CHECA_BOTAO_ESQUERDO:	@esvazia a pilha caso botão esquerdo foi pressionado
+	swi 0x202		    @coloca em r0 o valor do botão apertado
+	cmp r0, #1	        @checa se o botao esquerdo foi apertado
+	beq ESVAZIA_PILHA  
+	b loop 			    @se não foi, volta pro loop principal
+  
+PUSH:  
+	cmp r12, #6		    @se r12 igual a 6 a pilha está cheia
+	beq PILHA_CHEIA  
+	str r6, [r10]       @armazena o numero na posição da memoria apontado por r10
+	add r10, r11, r10   @passa para o próximo endereço
+	add r12, r5, r12    @i++
+	mov r6, #0		    @r6 recebe 0 para a proxima leitura
+	mov r4, #0			@r4 representa ...
+	b PREPARA_IMPRIMIR
 	b loop
 
-MOSTRAPILHAA:
-	ldr r2, [r10]
-	swi SWI_DRAW_INT
-	add r1, r5, r1
-	add r10, r11, r10
-	add r12, r5, r12
-	cmp r12, r14
-	beq loop
-	mov r8, #0
-	b MOSTRAPILHAA
+PREPARA_IMPRIMIR:   			@seta os registradores com os valores necessários para imprimir
+	swi SWI_LIMPA_TELA
+	mov r0, #0 			@coluna 0
+	mov r1, #0 			@linha 0
+	mov r14, #0			@vai contar o index até ele ser igual ao index atual armazenado em r12
+	@sub r10, r11, r10   @diminui 4 bytes da pilha, 
+	ldr r10,=memspace 	@pilha aponta para o começo
 
-MOSTRAPILHA:
-	mov r0, #0 @coluna 0
-	mov r1, #0 @linha 0
-	mov r14, r12 @provisorio
-	mov r12, #0 @provisorio
-	sub r10, r11, r10
-	ldr r10,=memspace @provisorio
-	b MOSTRAPILHAA
+IMPRIME: 				@imprime pilha
+	ldr r2, [r10]		@carrega o conteúdo da memória para r2
+	swi SWI_ESCREVE_INT	@imprime o número
+	add r1, r5, r1		@incrementa a linha em que será impresso
+	add r10, r11, r10	@passa para o próximo endereço na pilha
+	add r14, r5, r14	@i++
+	cmp r12, r14		@r14 contém o index atual e r12 o index em que o ultimo número está armazenado na pilha
+	beq loop			@se r12 igual a r14 acabou
+	@mov r8, #0
+	b IMPRIME
 
-PILHACHEIA:
+PILHA_CHEIA:
 	ldr r2,=mpilhacheia
 	add r1, r5, r1		@incrementa linha
-	swi SWI_DRAW_STRING
-	b MOSTRAPILHA
+	swi SWI_ESCREVE_STRING
+	b PREPARA_IMPRIMIR
 
-ESVAZIAPILHA: @se clicar no botao esquerda (left) esvazia pilha
+ESVAZIA_PILHA: 
 	cmp r12, #0
-	beq PILHAESVAZIADA
+	beq PILHA_VAZIA
 	str r9, [r10]		@armazena 0
 	sub r12, r12, r5
 	sub r10, r10, r11   @sub é diferente do add!!!
-	b ESVAZIAPILHA
+	b ESVAZIA_PILHA
 
-PILHAESVAZIADA:
-	swi SWI_CLEAR_DISPLAY
-	ldr r2,=mpilhaesvaziada
+PILHA_VAZIA:
+	swi SWI_LIMPA_TELA
+	ldr r2,=mPILHA_VAZIA
 	mov r0, #0			@coluna 0
 	mov r1, #0			@linha 0
-	swi SWI_DRAW_STRING
+	swi SWI_ESCREVE_STRING
+	mov r0, #0			@coluna 0
 	mov r1, #1			@linha 1
 	b loop
 
-OPERACAOPORZERO:
-	mov r0,#RIGHT_LED
+OPERACAO_POR_ZERO:
+	add r10, r11, r10   @arruma a pilha, pois ela está 2 posições para trás
+	add r10, r11, r10   @adicionando 8 bytes na posição atual
+	mov r0, #LED_DIREITO
 	swi SWI_SETLED
-	@wait
+	mov r13, r2
+	mov r2, #DOIS_SEGUNDOS	
+    bl PAUSA
+
+PAUSA:
+	@stmfd sp!, {r0-r1,lr}
+	swi SWI_GetTicks
+	mov r3, r0 @ R1: start time
+
+LOOP_PAUSA:
+	swi SWI_GetTicks
+	subs r0, r0, r3 @ R0: time since start
+	@rsblt r0, r0, #0 @ fix unsigned subtract
+	cmp r0, r2
+	blt LOOP_PAUSA
+
+TERMINA_WAIT:
 	mov r0,#0
 	swi SWI_SETLED
-	add r10, r11, r10 @arruma pilha
-	mov r0, #0
+	@add r10, r11, r10 @arruma pilha
+	mov r2, r13
 	b loop
 
-fim: @provisorio
-	add r8, r5, r8
-	cmp r8, #1000
-	bgt loop
-	b fim
-
-ENTRADA: @junta os algarismos
-	mul r6, r7, r6 	@multiplica o número armazenado por 10
-	cmp r2, r6		@
+JUNTA_ALGARISMOS: 		@junta os algarismos digitados, ele é multiplicado por 10 cada vez que um novo algarismo é inserido		
+	mul r6, r7, r6 		@multiplica o número armazenado por 10
+	cmp r2, r6			@
 	addgt r6, r2, r6 
 	bgt loop				
 	add r6, r6, r2  
 	b loop
 
-ZERO:		@0
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
-	mov r2, #0	
-	swi SWI_DRAW_INT
-	mov r0, #0
-	b ENTRADA
+ZERO:		
+	mov r0, r4			@coluna que o algarismo vai ser imprimido
+	add r4, r4, r5		@r4 controla em que coluna o próximo algarismo será imprimido
+	mov r2, #0			@r2 representa o próprio algarismo digitado
+	swi SWI_ESCREVE_INT	@imprime o algarismo
+	mov r0, #0			@reseta coluna
+	b JUNTA_ALGARISMOS
 
-UM:			@1
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
-	mov r2, #1
-	swi SWI_DRAW_INT	
-	mov r0, #0
-	b ENTRADA
+UM:			
+	mov r0, r4			@coluna que o algarismo vai ser printada
+	add r4, r4, r5		@r4 controla em que coluna o próximo algarismo será imprimido
+	mov r2, #1			@r2 representa o próprio algarismo digitado
+	swi SWI_ESCREVE_INT	@imprime o algarismo
+	mov r0, #0			@reseta coluna
+	b JUNTA_ALGARISMOS
 
-DOIS:			@2
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
-	mov r2, #2
-	swi SWI_DRAW_INT
-	mov r0, #0
-	b ENTRADA
+DOIS:			
+	mov r0, r4			@...
+	add r4, r4, r5		@...
+	mov r2, #2			@r2 representa o próprio algarismo digitado
+	swi SWI_ESCREVE_INT	@imprime o algarismo
+	mov r0, #0			@reseta coluna
+	b JUNTA_ALGARISMOS
 
-TRES:			@3
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
+TRES:			
+	mov r0, r4			
+	add r4, r4, r5		
 	mov r2, #3
-	swi SWI_DRAW_INT
+	swi SWI_ESCREVE_INT
 	mov r0, #0
-	b ENTRADA
+	b JUNTA_ALGARISMOS
 
-QUATRO:			@4
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
+QUATRO:			
+	mov r0, r4			
+	add r4, r4, r5		
 	mov r2, #4	
-	swi SWI_DRAW_INT
+	swi SWI_ESCREVE_INT
 	mov r0, #0	
-	b ENTRADA
+	b JUNTA_ALGARISMOS
 
-CINCO:			@5
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
+CINCO:		
+	mov r0, r4			
+	add r4, r4, r5		
 	mov r2, #5	
-	swi SWI_DRAW_INT
+	swi SWI_ESCREVE_INT
 	mov r0, #0
-	b ENTRADA
+	b JUNTA_ALGARISMOS
 
-SEIS:			@6
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
+SEIS:		
+	mov r0, r4			
+	add r4, r4, r5		
 	mov r2, #6	
-	swi SWI_DRAW_INT
+	swi SWI_ESCREVE_INT
 	mov r0, #0	
-	b ENTRADA
+	b JUNTA_ALGARISMOS
 
-SETE:			@7
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
+SETE:			
+	mov r0, r4			
+	add r4, r4, r5		
 	mov r2, #7	
-	swi SWI_DRAW_INT
+	swi SWI_ESCREVE_INT
 	mov r0, #0	
-	b ENTRADA
+	b JUNTA_ALGARISMOS
 
-OITO:			@8
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
+OITO:			
+	mov r0, r4			
+	add r4, r4, r5		
 	mov r2, #8	
-	swi SWI_DRAW_INT
+	swi SWI_ESCREVE_INT
 	mov r0, #0
-	b ENTRADA
+	b JUNTA_ALGARISMOS
 
-NOVE:			@9
-	mov r0, r4		@r0 representa a coluna
-	add r4, r4, r5		@incrementa a coluna que vai ser printada
+NOVE:			
+	mov r0, r4			
+	add r4, r4, r5		
 	mov r2, #9	
-	swi SWI_DRAW_INT
+	swi SWI_ESCREVE_INT
 	mov r0, #0	
-	b ENTRADA
+	b JUNTA_ALGARISMOS
 
 ENTER:
-	@add r4, r4, r5		@incrementa a coluna que vai ser printada
-	@mov r0, r4		@r0 representa a coluna
-	@ldr r2,=menter	@mostra mensagem enter
-	@swi SWI_DRAW_STRING
-	@mov r0, #0
-	mov r4, #0
-	mov r0, r4 		@reseta coluna
-	swi SWI_CLEAR_DISPLAY
-	b EMPURRAPILHA
+	mov r0, #0 			@reseta coluna
+	swi SWI_LIMPA_TELA
+	b PUSH
+							@---Comentários que valem nas branches MULTIPLICA, SUBTRAÇÃO e SOMA. Mesma sequencia de comandos, muda somente a operação efetuada---
+MULTIPLICA:					@
+	cmp r12, #2				@se index < 2 entao não possuo dois numeros na pilha, operação cancelada
+	blt loop	
+	subs r10, r10, r11  	@diminuo 4 bytes no r10 que controla a pilha, para pegar o último número que foi digitado
+	ldr r13, [r10]   		@armazeno em r13 o último número digitado atual
+	sub r12, r12, r5 		@diminuo um index da pilha
+	sub r10, r10, r11		@r10 aponta para penúltimo número digitado
+	ldr r14, [r10]			@armazeno em r14 o penúltimo número digitado
+	mul r13, r14, r13 		@faz operacao
+	str r13, [r10]			@armazena o resultado na pilha
+	add r10, r11, r10		@aumento um na memoria preparando para proxima JUNTA_ALGARISMOS, ponteiro pra memoria sempre aponta pra posição vazia, da proxima JUNTA_ALGARISMOS
+	swi SWI_LIMPA_TELA	
+	b PREPARA_IMPRIMIR		
 
-DIVISAO:		@divisao
-	cmp r12, #2		@se index < 2 entao não possuo dois numeros na pilha
-	blt loop
-	ldr r13, [r10]   @armazeno posicao atual
-	sub r10, r10, r11 @diminuo 4 bytes da memoria para apontar para o numero anterior
-	ldr r14, [r10]
-	cmp r13, #0
-	beq OPERACAOPORZERO
-	cmp r14, #0
-	beq OPERACAOPORZERO
-	sub r12, r12, r5  @diminuo um index
-	@vdiv r13, r14, r13
-	str r13, [r10]
-	add r10, r11, r10	@aumento um na memoria preparando para proxima entrada, ponteiro pra memoria sempre aponta pra posição vazia, da proxima entrada
-
-	mov r8, #0
-
-CalculaDivisao:
-	@calcula divisao
-	@r13 dividido por r14
-	@armazena valor em r8, guarda em r10
-
-RESTO:		@resto
-	cmp r12, #2		@se index < 2 entao não possuo dois numeros na pilha
-	blt loop
-	subs r10, r10, r11
-	ldr r13, [r10]   @armazeno posicao atual
-	sub r10, r10, r11 @diminuo 4 bytes da memoria para apontar para o numero anterior
-	ldr r14, [r10]
-	cmp r13, #0
-	beq OPERACAOPORZERO
-	cmp r14, #0
-	beq OPERACAOPORZERO
-	sub r12, r12, r5  @diminuo um index
-	b CalculaResto
-
-CalculaResto: @calcula resto | r13 resto de r14 | armazena valor em r8, guarda em r10
-	sub r13, r14, r13
-	cmp r13, r14
-	bgt CalculaResto
-	beq CalculaResto
-	str r13, [r10]
-	add r10, r11, r10	@aumento um na memoria preparando para proxima entrada, ponteiro pra memoria sempre aponta pra posição vazia, da proxima entrada
-	mov r0, #0
-	b MOSTRAPILHA
-
-Resto:
-
-
-	
-MULTIPLICA:
-	cmp r12, #2			@se index < 2 entao não possuo dois numeros na pilha
-	blt loop
-	subs r10, r10, r11
-	ldr r13, [r10]   	@armazeno posicao atual
-	sub r12, r12, r5 	@diminuo um index
-	sub r10, r10, r11
-	ldr r14, [r10]
-	mul r13, r14, r13 	@operacao
-	str r13, [r10]
-	add r10, r11, r10	@aumento um na memoria preparando para proxima entrada, ponteiro pra memoria sempre aponta pra posição vazia, da proxima entrada
-	swi SWI_CLEAR_DISPLAY
-
-	@ldr r2,=mmultiplicacao	@multiplicacao
-	@swi SWI_DRAW_STRING
-	mov r0, #0
-	b MOSTRAPILHA	
-
-SUBTRACAO:			@subtracao
-	cmp r12, #2		@se index < 2 entao não possuo dois numeros na pilha
-	blt loop
-	subs r10, r10, r11
-	ldr r13, [r10]   @armazeno posicao atual
-	sub r12, r12, r5 @diminuo um index
-	sub r10, r10, r11
-	ldr r14, [r10]
-	sub r13, r14, r13	@operação
-	str r13, [r10]
-	add r10, r11, r10	@aumento um na memoria preparando para proxima entrada, ponteiro pra memoria sempre aponta pra posição vazia, da proxima entrada
-	swi SWI_CLEAR_DISPLAY
-
-	mov r0, #0
-	b MOSTRAPILHA	
+SUBTRACAO:		
+	cmp r12, #2				@**
+	blt loop				
+	subs r10, r10, r11		@**
+	ldr r13, [r10]   		@**
+	sub r12, r12, r5    	@**
+	sub r10, r10, r11		@**
+	ldr r14, [r10]			@**
+	sub r13, r14, r13		@faz operacao de subtração
+	str r13, [r10]			@**
+	add r10, r11, r10		@**
+	swi SWI_LIMPA_TELA
+	b PREPARA_IMPRIMIR	
 	
 SOMA:
-	cmp r12, #2		   @se index < 2 entao não possuo dois numeros na pilha
-	blt loop
-	subs r10, r10, r11 @vou pra posição anterior do array
-	ldr r13, [r10]     @armazeno posicao atual
-	subs r12, r12, r5  @diminuo um index
-	subs r10, r10, r11
-	ldr r14, [r10]
-	add r13, r14, r13
-	str r13, [r10]
-	add r10, r11, r10
-	swi SWI_CLEAR_DISPLAY
+	cmp r12, #2		   		@**
+	blt loop		
+	subs r10, r10, r11 		@**
+	ldr r13, [r10]     		@**
+	subs r12, r12, r5  		@**
+	subs r10, r10, r11 		@**
+	ldr r14, [r10]	   		@**
+	add r13, r14, r13  		@faz operação de soma
+	str r13, [r10]     		@**
+	add r10, r11, r10  		@**
+	swi SWI_LIMPA_TELA
+	b PREPARA_IMPRIMIR
 
-	@ldr r2,=madicao	
-	@swi SWI_DRAW_STRING
-	mov r0, #0
-	b MOSTRAPILHA
+DIVISAO:			    
+	cmp r12, #2		    	@se index < 2 entao não possuo dois numeros na pilha, operação cancelada
+	blt loop	
+	sub r10, r10, r11 		@diminuo 4 bytes para pegar o último número que foi digitado
+	ldr r13, [r10]  		@armazeno o número em r13
+	sub r10, r10, r11   	@diminuo mais 4 bytes da memoria para apontar para o numero anterior ao digitado
+	ldr r14, [r10]			@armazeno o número em r14
+	cmp r13, #0				@se r13 ou r14 forem zero, acende led vermelho
+	beq OPERACAO_POR_ZERO	
+	cmp r14, #0	
+	beq OPERACAO_POR_ZERO	
+	b CALCULA_DIVISAO		@se não, faço o calculo da divisão: r14/r13
 
-Message: .asciz "Calculadora\n"
-madicao: .asciz "+"
-msubtracao: .asciz "-"
-mresto: .asciz "%"
-mmultiplicacao: .asciz "*"
-menter: .asciz "enter"
-mdivisao: .asciz "/"
-marmazenou: .asciz "armazenou"
+CALCULA_DIVISAO:
+	cmp r13, r14 
+	sublt r14, r14, r13		@subtraio r13 ate r14 ser menor ou igual a r13
+	subeq r14, r14, r13		
+	addlt r6, r6, r5		@r6 armazena a quantidade de vezes que foi subtraido
+	addeq r6, r6, r5
+	blt CALCULA_DIVISAO		@se r14 maior que r13 continua
+	beq CALCULA_DIVISAO		@se forem iguais também
+	str r6, [r10]			@gravo r6
+	mov r6, #0				@reseto para próxima JUNTA_ALGARISMOS
+	subs r12, r12, r5  		@diminuo um index total
+	b PREPARA_IMPRIMIR
+
+RESTO:					
+	cmp r12, #2		    	@se index < 2 entao não possuo dois numeros na pilha, operação cancelada
+	blt loop	
+	sub r10, r10, r11 		@diminuo 4 bytes no r10 que controla a pilha, para pegar o último número que foi digitado
+	ldr r13, [r10]  		@armazeno o número em r13
+	sub r10, r10, r11   	@diminuo mais 4 bytes da memoria para apontar para o numero anterior ao digitado
+	ldr r14, [r10]			@armazeno o número em r14
+	cmp r13, #0				@se r13 ou r14 forem zero, acende led vermelho
+	beq OPERACAO_POR_ZERO	
+	cmp r14, #0	
+	beq OPERACAO_POR_ZERO	
+	b CALCULA_RESTO			@se não, faço o calculo da divisão: r14/r13
+	
+CALCULA_RESTO: 
+	cmp r13, r14 
+	sublt r14, r14, r13		@subtraio r13 ate r14 ser menor ou igual a r13	
+	subeq r14, r14, r13	
+	blt CALCULA_RESTO
+	mov r6, r14
+	str r6, [r10]			@gravo r6
+	mov r6, #0				@reseto para próxima JUNTA_ALGARISMOS
+	subs r12, r12, r5  		@diminuo um index total
+	b PREPARA_IMPRIMIR
+
+@Message: .asciz "Calculadora\n"
+@madicao: .asciz "+"
+@msubtracao: .asciz "-"
+@mresto: .asciz "%"
+@mmultiplicacao: .asciz "*"
+@menter: .asciz "enter"
+@mdivisao: .asciz "/"
+@marmazenou: .asciz "armazenou"
 mpilhacheia: .asciz "Pilha cheia!"
-mpilhaesvaziada: .asciz "Pilha esvaziada"
-
-@11.4  Example: Subroutine to implement a wait cycle with the 32‐bit timer
-@ Wait(Delay:r2) wait for r2 milliseconds
-@Wait:
-@stmfdsp!, {r0-r1,lr}
-@swi SWI_GetTicks
-@mov r1, r0 @ R1: start time
-@WaitLoop:
-@swi SWI_GetTicks
-@subs r0, r0, r1 @ R0: time since start
-@rsbltr0, r0, #0 @ fix unsigned subtract
-@cmp r0, r2
-@blt WaitLoop
-@WaitDone:
-@ldmfdsp!, {r0-r1,pc}
-
-@se divisao por 0
-@mov r0,#LEFT_LED
-@swi SWI_SETLED
-
-@	.equ Sec1, 1000 @ 1 seconds interval
-@	.equ Point1Sec, 100 @ 0.1 seconds interval
-@	.equ EmbestTimerMask, 0x7fff @ 15 bit mask for timer values
-@	.equ Top15bitRange,0x0000ffff @(2^15) -1 = 32,767
-@	.text
-@_start:
-@	mov r6,#0 @ counting the loops (not necessary)
-@	ldr r8,=Top15bitRange
-@	ldr r7,=EmbestTimerMask
-@	ldr r10,=Point1Sec
-@	SWI SWI_GetTicks @Get current time T1
-@	mov r1,r0 @ R1 is T1
-@	and r1,r1,r7 @ T1 in 15 bits
-@RepeatTillTime:
-@	add r6,r6,#1 @ count number of loops (not necessary)
-@	SWI SWI_GetTicks @Get current time T2
-@	mov r2,r0 @ R2 is T2
-@	and r2,r2,r7 @ T2 in 15 bits
-@	cmp r2,r1 @ is T2>T1?
-@bgesimpletime:
-@	sub r9,r8,r1 @ TIME= 32,676 - T1
-@	add r9,r9,r2 @ + T2
-@	bal CheckInt
-@simpletime:
-@	sub r9,r2,r1 @ TIME = T2-T1
-@CheckInt:
-@	cmp r9,r10 @is TIME < interval?
-@ 	blt RepeatTillTime
-@	swi	SWI_EXIT
-@.end
-
+mPILHA_VAZIA: .asciz "Pilha esvaziada"

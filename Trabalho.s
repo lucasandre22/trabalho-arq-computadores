@@ -38,12 +38,12 @@
 @--------------------------------------------------------------------------@
 
 _start:
-	mov r0, #0				@coluna
-	mov r1, #0				@linha
-	mov r2, #0				@texto
+	mov r0, #0				@contrle coluna da tela, guarda também o algarismo que o usuário digita
+	mov r1, #0				@controla linha da tela
+	mov r2, #0				
 	mov r3, #0 				
 	mov r4, #0
-	mov r5, #1			    @controla index
+	mov r5, #1			    @controla index, usado para somar 1 nos registradores do programa quando necessário
 	mov r6, #0				@JUNTA_ALGARISMOS do usuário
 	mov r8, #0
 	mov r7, #10 			@multiplicador dos números de JUNTA_ALGARISMOS 
@@ -105,16 +105,15 @@ PUSH:
 	add r10, r11, r10   	@passa para o próximo endereço
 	add r12, r5, r12    	@i++
 	mov r6, #0		    	@r6 recebe 0 para a proxima leitura
-	mov r4, #0				@r4 representa a coluna, vai variando digita os números, quando der push volta pra 0
+	mov r4, #0				@r4 representa a coluna e vai variando digita os números, quando der push volta pra 0
 	b PREPARA_IMPRIMIR	
 	b loop	
 
-PREPARA_IMPRIMIR:   				@seta os registradores com os valores necessários para imprimir
-	swi SWI_LIMPA_TELA	
+PREPARA_IMPRIMIR:   		@seta os registradores com os valores necessários para imprimir
+	swi SWI_LIMPA_TELA
 	mov r0, #0 				@coluna 0
 	mov r1, #0 				@linha 0
 	mov r14, #0				@vai contar o index até ele ser igual ao index atual armazenado em r12
-	@sub r10, r11, r10  	 @diminui 4 bytes da pilha, 
 	ldr r10,=memspace 		@pilha aponta para o começo
 
 IMPRIME: 					@imprime pilha
@@ -125,26 +124,28 @@ IMPRIME: 					@imprime pilha
 	add r14, r5, r14		@i++
 	cmp r12, r14			@r14 contém o index atual e r12 o index em que o ultimo número está armazenado na pilha
 	beq loop				@se r12 igual a r14 acabou
-	@mov r8, #0
 	b IMPRIME
 
-PILHA_CHEIA:
+PILHA_CHEIA:				
 	ldr r2,=mpilhacheia
-	mov r4, #0			
+	mov r14, #0				@vai contar o index até ele ser igual ao index atual armazenado em r12
+	ldr r10,=memspace 		@pilha aponta para o começo
+	mov r4, #0				@r4 que controla a coluna tem que ser retado (é retado normalmente na branch PUSH, mas como ele não é chamado caso a pilha esteja cheia, é retado aqui também)
+	mov r6, #0				@reseto o valor que o usuário digitou e não foi inserido porque a pilha estava cheia
 	swi SWI_ESCREVE_STRING
 	b PREPARA_IMPRIMIR
 
-ESVAZIA_PILHA: 
-	cmp r12, #0
-	beq PILHA_VAZIA
-	str r9, [r10]			@armazena 0
-	sub r12, r12, r5	
-	sub r10, r10, r11   	@sub é diferente do add!!!
+ESVAZIA_PILHA: 				@branch é executada caso aperte o botão azul esquerdo
+	cmp r12, #0				@a cada iteração verifico se o index é 0, para poder sair da branch
+	beq PILHA_ESVAZIADA
+	str r9, [r10]			@vai iterando pela pilha zerando os valores antigos
+	sub r12, r12, r5		@
+	sub r10, r10, r11   	
 	b ESVAZIA_PILHA
 
-PILHA_VAZIA:
-	swi SWI_LIMPA_TELA
-	ldr r2,=mPILHA_VAZIA
+PILHA_ESVAZIADA:
+	swi SWI_LIMPA_TELA		
+	ldr r2,=mPILHA_ESVAZIADA	@aparece message pilha vazia na tela
 	mov r0, #0				@coluna 0
 	mov r1, #0				@linha 0
 	swi SWI_ESCREVE_STRING
@@ -158,19 +159,17 @@ OPERACAO_POR_ZERO:
 	mov r0, #LED_DIREITO
 	swi SWI_SETLED
 	mov r13, r2
-	mov r2, #DOIS_SEGUNDOS	
     bl PAUSA
 
 PAUSA:
-	@stmfd sp!, {r0-r1,lr}
+	mov r2, #DOIS_SEGUNDOS	@seta dois segundos de pausa
 	swi SWI_GetTicks
-	mov r3, r0 @ R1: start time
+	mov r3, r0 				@r3 tempo inicial
 
 LOOP_PAUSA:
 	swi SWI_GetTicks
-	subs r0, r0, r3 @ R0: time since start
-	@rsblt r0, r0, #0 @ fix unsigned subtract
-	cmp r0, r2
+	subs r0, r0, r3 		@r3 tempo atual
+	cmp r0, r2				
 	blt LOOP_PAUSA
 
 TERMINA_WAIT:
@@ -365,13 +364,5 @@ CALCULA_RESTO:
 	subs r12, r12, r5  		@diminuo um index total
 	b PREPARA_IMPRIMIR
 
-@Message: .asciz "Calculadora\n"
-@madicao: .asciz "+"
-@msubtracao: .asciz "-"
-@mresto: .asciz "%"
-@mmultiplicacao: .asciz "*"
-@menter: .asciz "enter"
-@mdivisao: .asciz "/"
-@marmazenou: .asciz "armazenou"
 mpilhacheia: .asciz "Pilha cheia!"
-mPILHA_VAZIA: .asciz "Pilha esvaziada"
+mPILHA_ESVAZIADA: .asciz "Pilha esvaziada"

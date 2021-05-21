@@ -92,69 +92,69 @@ loop:
 	cmp r0, #1 
 	b CHECA_BOTAO_ESQUERDO
 
-CHECA_BOTAO_ESQUERDO:	@esvazia a pilha caso botão esquerdo foi pressionado
-	swi 0x202		    @coloca em r0 o valor do botão apertado
-	cmp r0, #1	        @checa se o botao esquerdo foi apertado
-	beq ESVAZIA_PILHA  
-	b loop 			    @se não foi, volta pro loop principal
-  
-PUSH:  
-	cmp r12, #6		    @se r12 igual a 6 a pilha está cheia
-	beq PILHA_CHEIA  
-	str r6, [r10]       @armazena o numero na posição da memoria apontado por r10
-	add r10, r11, r10   @passa para o próximo endereço
-	add r12, r5, r12    @i++
-	mov r6, #0		    @r6 recebe 0 para a proxima leitura
-	mov r4, #0			@r4 representa ...
-	b PREPARA_IMPRIMIR
-	b loop
+CHECA_BOTAO_ESQUERDO:		@esvazia a pilha caso botão esquerdo foi pressionado
+	swi 0x202		    	@coloca em r0 o valor do botão apertado
+	cmp r0, #1	        	@checa se o botao esquerdo foi apertado
+	beq ESVAZIA_PILHA  	
+	b loop 			    	@se não foi, volta pro loop principal
+	
+PUSH:  	
+	cmp r12, #6		    	@se r12 igual a 6 a pilha está cheia
+	beq PILHA_CHEIA  	
+	str r6, [r10]       	@armazena o numero na posição da memoria apontado por r10
+	add r10, r11, r10   	@passa para o próximo endereço
+	add r12, r5, r12    	@i++
+	mov r6, #0		    	@r6 recebe 0 para a proxima leitura
+	mov r4, #0				@r4 representa a coluna, vai variando digita os números, quando der push volta pra 0
+	b PREPARA_IMPRIMIR	
+	b loop	
 
-PREPARA_IMPRIMIR:   			@seta os registradores com os valores necessários para imprimir
-	swi SWI_LIMPA_TELA
-	mov r0, #0 			@coluna 0
-	mov r1, #0 			@linha 0
-	mov r14, #0			@vai contar o index até ele ser igual ao index atual armazenado em r12
-	@sub r10, r11, r10   @diminui 4 bytes da pilha, 
-	ldr r10,=memspace 	@pilha aponta para o começo
+PREPARA_IMPRIMIR:   				@seta os registradores com os valores necessários para imprimir
+	swi SWI_LIMPA_TELA	
+	mov r0, #0 				@coluna 0
+	mov r1, #0 				@linha 0
+	mov r14, #0				@vai contar o index até ele ser igual ao index atual armazenado em r12
+	@sub r10, r11, r10  	 @diminui 4 bytes da pilha, 
+	ldr r10,=memspace 		@pilha aponta para o começo
 
-IMPRIME: 				@imprime pilha
-	ldr r2, [r10]		@carrega o conteúdo da memória para r2
-	swi SWI_ESCREVE_INT	@imprime o número
-	add r1, r5, r1		@incrementa a linha em que será impresso
-	add r10, r11, r10	@passa para o próximo endereço na pilha
-	add r14, r5, r14	@i++
-	cmp r12, r14		@r14 contém o index atual e r12 o index em que o ultimo número está armazenado na pilha
-	beq loop			@se r12 igual a r14 acabou
+IMPRIME: 					@imprime pilha
+	ldr r2, [r10]			@carrega o conteúdo da memória para r2
+	swi SWI_ESCREVE_INT		@imprime o número
+	add r1, r5, r1			@incrementa a linha em que será impresso
+	add r10, r11, r10		@passa para o próximo endereço na pilha
+	add r14, r5, r14		@i++
+	cmp r12, r14			@r14 contém o index atual e r12 o index em que o ultimo número está armazenado na pilha
+	beq loop				@se r12 igual a r14 acabou
 	@mov r8, #0
 	b IMPRIME
 
 PILHA_CHEIA:
 	ldr r2,=mpilhacheia
-	add r1, r5, r1		@incrementa linha
+	mov r4, #0			
 	swi SWI_ESCREVE_STRING
 	b PREPARA_IMPRIMIR
 
 ESVAZIA_PILHA: 
 	cmp r12, #0
 	beq PILHA_VAZIA
-	str r9, [r10]		@armazena 0
-	sub r12, r12, r5
-	sub r10, r10, r11   @sub é diferente do add!!!
+	str r9, [r10]			@armazena 0
+	sub r12, r12, r5	
+	sub r10, r10, r11   	@sub é diferente do add!!!
 	b ESVAZIA_PILHA
 
 PILHA_VAZIA:
 	swi SWI_LIMPA_TELA
 	ldr r2,=mPILHA_VAZIA
-	mov r0, #0			@coluna 0
-	mov r1, #0			@linha 0
+	mov r0, #0				@coluna 0
+	mov r1, #0				@linha 0
 	swi SWI_ESCREVE_STRING
-	mov r0, #0			@coluna 0
-	mov r1, #1			@linha 1
+	mov r0, #0				@coluna 0
+	mov r1, #1				@linha 1
 	b loop
 
 OPERACAO_POR_ZERO:
-	add r10, r11, r10   @arruma a pilha, pois ela está 2 posições para trás
-	add r10, r11, r10   @adicionando 8 bytes na posição atual
+	add r10, r11, r10   	@arruma a pilha, pois ela está 2 posições para trás
+	add r10, r11, r10   	@adicionando 8 bytes na posição atual
 	mov r0, #LED_DIREITO
 	swi SWI_SETLED
 	mov r13, r2
@@ -176,41 +176,41 @@ LOOP_PAUSA:
 TERMINA_WAIT:
 	mov r0,#0
 	swi SWI_SETLED
-	@add r10, r11, r10 @arruma pilha
+	@add r10, r11, r10 		@arruma pilha
 	mov r2, r13
 	b loop
 
-JUNTA_ALGARISMOS: 		@junta os algarismos digitados, ele é multiplicado por 10 cada vez que um novo algarismo é inserido		
-	mul r6, r7, r6 		@multiplica o número armazenado por 10
-	cmp r2, r6			@
+JUNTA_ALGARISMOS: 			@junta os algarismos digitados, ele é multiplicado por 10 cada vez que um novo algarismo é inserido		
+	mul r6, r7, r6 			@multiplica o número armazenado por 10
+	cmp r2, r6				@
 	addgt r6, r2, r6 
-	bgt loop				
+	bgt loop					
 	add r6, r6, r2  
 	b loop
 
 ZERO:		
-	mov r0, r4			@coluna que o algarismo vai ser imprimido
-	add r4, r4, r5		@r4 controla em que coluna o próximo algarismo será imprimido
-	mov r2, #0			@r2 representa o próprio algarismo digitado
-	swi SWI_ESCREVE_INT	@imprime o algarismo
-	mov r0, #0			@reseta coluna
-	b JUNTA_ALGARISMOS
+	mov r0, r4				@coluna que o algarismo vai ser imprimido
+	add r4, r4, r5			@r4 controla em que coluna o próximo algarismo será imprimido
+	mov r2, #0				@r2 representa o próprio algarismo digitado
+	swi SWI_ESCREVE_INT		@imprime o algarismo
+	mov r0, #0				@reseta coluna
+	b JUNTA_ALGARISMOS	
 
-UM:			
-	mov r0, r4			@coluna que o algarismo vai ser printada
-	add r4, r4, r5		@r4 controla em que coluna o próximo algarismo será imprimido
-	mov r2, #1			@r2 representa o próprio algarismo digitado
-	swi SWI_ESCREVE_INT	@imprime o algarismo
-	mov r0, #0			@reseta coluna
-	b JUNTA_ALGARISMOS
+UM:				
+	mov r0, r4				@coluna que o algarismo vai ser printada
+	add r4, r4, r5			@r4 controla em que coluna o próximo algarismo será imprimido
+	mov r2, #1				@r2 representa o próprio algarismo digitado
+	swi SWI_ESCREVE_INT		@imprime o algarismo
+	mov r0, #0				@reseta coluna
+	b JUNTA_ALGARISMOS	
 
-DOIS:			
-	mov r0, r4			@...
-	add r4, r4, r5		@...
-	mov r2, #2			@r2 representa o próprio algarismo digitado
-	swi SWI_ESCREVE_INT	@imprime o algarismo
-	mov r0, #0			@reseta coluna
-	b JUNTA_ALGARISMOS
+DOIS:				
+	mov r0, r4				@...
+	add r4, r4, r5			@...
+	mov r2, #2				@r2 representa o próprio algarismo digitado
+	swi SWI_ESCREVE_INT		@imprime o algarismo
+	mov r0, #0				@reseta coluna
+	b JUNTA_ALGARISMOS	
 
 TRES:			
 	mov r0, r4			
@@ -269,7 +269,7 @@ NOVE:
 	b JUNTA_ALGARISMOS
 
 ENTER:
-	mov r0, #0 			@reseta coluna
+	mov r0, #0 				@reseta coluna
 	swi SWI_LIMPA_TELA
 	b PUSH
 							@---Comentários que valem nas branches MULTIPLICA, SUBTRAÇÃO e SOMA. Mesma sequencia de comandos, muda somente a operação efetuada---
@@ -287,7 +287,7 @@ MULTIPLICA:					@
 	swi SWI_LIMPA_TELA	
 	b PREPARA_IMPRIMIR		
 
-SUBTRACAO:		
+SUBTRACAO:					@Ver comentários da branch MULTIPLICA, são as mesmas instruções
 	cmp r12, #2				@**
 	blt loop				
 	subs r10, r10, r11		@**
@@ -301,7 +301,7 @@ SUBTRACAO:
 	swi SWI_LIMPA_TELA
 	b PREPARA_IMPRIMIR	
 	
-SOMA:
+SOMA:						@Ver comentários da branch MULTIPLICA, são as mesmas instruções
 	cmp r12, #2		   		@**
 	blt loop		
 	subs r10, r10, r11 		@**
@@ -315,7 +315,7 @@ SOMA:
 	swi SWI_LIMPA_TELA
 	b PREPARA_IMPRIMIR
 
-DIVISAO:			    
+DIVISAO:			    	
 	cmp r12, #2		    	@se index < 2 entao não possuo dois numeros na pilha, operação cancelada
 	blt loop	
 	sub r10, r10, r11 		@diminuo 4 bytes para pegar o último número que foi digitado
